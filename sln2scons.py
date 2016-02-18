@@ -29,13 +29,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import array
 import re
 import os
 import string
 from os import path
 from xml.dom.minidom import parseString
 from pathcorrect import CaseCorrect
+
 
 class Project:
     def __init__(self):
@@ -54,14 +54,16 @@ class Project:
         self.dependencies = []
         self.sorted = False
 
+
 class Folder:
     def __init__(self):
         self.id = ""
         self.name = ""
 
+
 class Sln2SCons:
     """Parse Microsoft Visual C solution file and convert to SCons.
-    
+
     Keyword arguments:
     slnFile -- solution file name
     outputPath -- place where base SConstruct will be created (default current),
@@ -69,9 +71,9 @@ class Sln2SCons:
     """
     def __init__(self, slnFile, exlist=[], dirrepl=[], librepl=[], outputPath=''):
         casedir = CaseCorrect()
-        file = open(casedir.correct(slnFile),"r")
-        arrproj=[]
-        arrfolder=[]
+        file = open(casedir.correct(slnFile), "r")
+        arrproj = []
+        arrfolder = []
         # example of pattern #1
         # Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AASSODDLL", "DevSrc\Drivers30\MW\AASSODDLL\AASSODDLL.vcproj", "{A709D276-7285-40A7-9D4D-9D9B2949EEDA}"
         pat1 = re.compile(r"""
@@ -93,6 +95,7 @@ class Sln2SCons:
          \(ProjectDependencies\)
          (.*)$
          """, re.VERBOSE)
+        pat2 = pat2  # not used currently, this is to avoid flake8 warning
         # example of pattern #3
         # {B746B5A2-F8F1-4A30-9C72-69348B3DCBEC} = {B746B5A2-F8F1-4A30-9C72-69348B3DCBEC}
         pat3 = re.compile(r"""
@@ -109,6 +112,7 @@ class Sln2SCons:
          EndProjectSection
          (.*)$
          """, re.VERBOSE)
+        pat4 = pat4  # not used currently, this is to avoid flake8 warning
         # example of pattern #5
         # EndProject
         pat5 = re.compile(r"""
@@ -131,7 +135,7 @@ class Sln2SCons:
                     proj = Project()
                     proj.id = match.group("id")
                     proj.name = match.group("name")
-                    joined = path.join(os.getcwd(), path.join(path.dirname(slnFile),match.group("path")).replace("\\", "/")).replace("\\", "/")
+                    joined = path.join(os.getcwd(), path.join(path.dirname(slnFile), match.group("path")).replace("\\", "/")).replace("\\", "/")
                     proj.path = self._relativePath(os.getcwd().replace("\\", "/"), joined).replace("\\", "/")
                     proj.abspath = path.normpath(path.join(os.getcwd(), path.dirname(proj.path))) + "/"
                 elif type_folder == match.group("type"):
@@ -271,7 +275,7 @@ class Sln2SCons:
                         libpaths += "'" + self._applyDirRepl(dirrepl, librarydir.replace("\\", "/")) + "'"
                     if libpaths != "":
                         f.write("e['LIBPATH'] = [" + libpaths + "]\n")
-                    #f.write("env['CPPDEFINES'] = [('i386', '1'), ('LINUX', '1'), ('HAVE_VISIBILITY_HIDDEN_ATTRIBUTE', '1'), ('HAVE_VISIBILITY_PRAGMA', '1'), ('XP_UNIX', '1'), ('_GNU_SOURCE', '1'), ('HAVE_FCNTL_FILE_LOCKING', '1'), ('HAVE_LCHOWN', '1'), ('HAVE_STRERROR', '1'), ('_REENTRANT', '1'), ('HAVE_EXPAT_CONFIG_H', '1')]\n")
+                    # f.write("env['CPPDEFINES'] = [('i386', '1'), ('LINUX', '1'), ('HAVE_VISIBILITY_HIDDEN_ATTRIBUTE', '1'), ('HAVE_VISIBILITY_PRAGMA', '1'), ('XP_UNIX', '1'), ('_GNU_SOURCE', '1'), ('HAVE_FCNTL_FILE_LOCKING', '1'), ('HAVE_LCHOWN', '1'), ('HAVE_STRERROR', '1'), ('_REENTRANT', '1'), ('HAVE_EXPAT_CONFIG_H', '1')]\n")
                     # include directories
                     incdirs = ""
                     for include in proj.incdir:
@@ -317,7 +321,7 @@ class Sln2SCons:
                     elif proj.conftype == "4":
                         # make static library
                         f.write(proj.name + " = e.StaticLibrary('" + proj.name + "', [" + sources + "])\n")
-                        #f.write(proj.name + " = e.StaticLibrary('" + proj.name + "', [" + sources + "])\n")
+                        # f.write(proj.name + " = e.StaticLibrary('" + proj.name + "', [" + sources + "])\n")
                     f.write("e.Default(" + proj.name + ")\n")
                     f.write("e.Install(Dir('#/' + e['MYPLATFORM'] + '/lib/release'), " + proj.name + ")\n")
                     f.write("\n")
@@ -361,14 +365,14 @@ class Sln2SCons:
         f.write("Export('env')\n")
         f.write("\n")
         # defines
-        #f.write("CPPDEFINES = [('i386', '1'), ('LINUX', '1'), ('HAVE_VISIBILITY_HIDDEN_ATTRIBUTE', '1'), ('HAVE_VISIBILITY_PRAGMA', '1'), ('XP_UNIX', '1'), ('_GNU_SOURCE', '1'), ('HAVE_FCNTL_FILE_LOCKING', '1'), ('HAVE_LCHOWN', '1'), ('HAVE_STRERROR', '1'), ('_REENTRANT', '1'), ('HAVE_EXPAT_CONFIG_H', '1')]")
+        # f.write("CPPDEFINES = [('i386', '1'), ('LINUX', '1'), ('HAVE_VISIBILITY_HIDDEN_ATTRIBUTE', '1'), ('HAVE_VISIBILITY_PRAGMA', '1'), ('XP_UNIX', '1'), ('_GNU_SOURCE', '1'), ('HAVE_FCNTL_FILE_LOCKING', '1'), ('HAVE_LCHOWN', '1'), ('HAVE_STRERROR', '1'), ('_REENTRANT', '1'), ('HAVE_EXPAT_CONFIG_H', '1')]")
         # find dependant project
-        #for proj in arrproj:
-        #    for dep in proj.dependencies:
-        #        for projdep in arrproj:
-        #            if projdep.id == dep:
-        #                f.write("env.Depends('" + proj.name  + "', '" + projdep.name + "')\n")
-        #f.write("env.SConscript([")
+        # for proj in arrproj:
+        #     for dep in proj.dependencies:
+        #         for projdep in arrproj:
+        #             if projdep.id == dep:
+        #                 f.write("env.Depends('" + proj.name  + "', '" + projdep.name + "')\n")
+        # f.write("env.SConscript([")
         for proj in arrproj:
             doit = True
             for elem in exlist:
@@ -383,16 +387,16 @@ class Sln2SCons:
                     f.write("env.SConscript('" + repl + "')\n")
         f.close()
 
-    def _processMacros(self, str, proj, useabs, useout = False):
+    def _processMacros(self, str, proj, useabs, useout=False):
         slndir = self.slnDir
         if useabs:
             slndir = self.absSlnDir
         if useout:
             slndir = self.outSlnDir
         ret = str.replace(
-              "$(SolutionDir)", slndir).replace(
-              "$(ConfigurationName)", self.config.lower()).replace(
-              "&quot;", "\"")
+            "$(SolutionDir)", slndir).replace(
+            "$(ConfigurationName)", self.config.lower()).replace(
+            "&quot;", "\"")
         if proj:
             ret = ret.replace("$(ProjectName)", proj.name)
             if proj.intdir != "":
@@ -405,9 +409,8 @@ class Sln2SCons:
     def _getFileContent(self, fileName):
         """Try to open the file and return its contents. In case of error
         return None.
-        
+
         Return the content of the file
-        
         """
         try:
             file = open(fileName, 'rb')
@@ -415,7 +418,7 @@ class Sln2SCons:
             file.close()
         except:
             return None
-        return content;
+        return content
 
     def _relativePath(self, source, target):
         source = path.normpath(path.join(source.replace("\\.\\", "").replace("\\", "/"), "")).replace("\\", "/")
@@ -424,12 +427,12 @@ class Sln2SCons:
         tu = target.split("/")
         su.reverse()
         tu.reverse()
-        #remove parts which are equal   (['a', 'b'] ['a', 'c'] --> ['c'])
+        # remove parts which are equal   (['a', 'b'] ['a', 'c'] --> ['c'])
         while len(su) > 0 and len(tu) > 0 and su[-1] == tu[-1]:
             su.pop()
-            last_pop=tu.pop()
+            last_pop = tu.pop()
         if len(su) == 1 and su[0] == "" and len(tu) == 0:
-            #Special case: (http://foo/a/ http://foo/a -> ../a)
+            # Special case: (http://foo/a/ http://foo/a -> ../a)
             su.append(last_pop)
             tu.append(last_pop)
         tu.reverse()
@@ -469,4 +472,3 @@ if __name__ == '__main__':
     # special library name replacement rules (when win library name doesn't match OS's library name)
     librepl = []
     Sln2SCons("../winnt/test.sln", exlist, dirrepl, librepl, "../")
-
